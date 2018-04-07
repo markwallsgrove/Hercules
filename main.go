@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/markwallsgrove/slack/bot"
-	"github.com/markwallsgrove/slack/workers"
+	"github.com/markwallsgrove/hercules/bot"
+	"github.com/markwallsgrove/hercules/workers"
 )
 
 func main() {

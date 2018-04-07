@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/go-redis/redis"
-	"github.com/markwallsgrove/slack/workers"
+	"github.com/markwallsgrove/hercules/workers"
 	"github.com/nlopes/slack"
 )
 
