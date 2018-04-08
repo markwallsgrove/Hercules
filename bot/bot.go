@@ -42,10 +42,11 @@ func (b *Bot) Listen() {
 			}
 		case signal := <-b.quitSignal:
 			b.logger.Printf("Recieved signal: %v", signal)
-			return
+			break
 		}
 	}
 
+	b.rtm.Disconnect()
 }
 
 // Quit listening to slack. This will cause the listen method to quit.
@@ -65,7 +66,7 @@ func (b *Bot) Quit() {
 }
 
 // MakeBot create a new bot
-func MakeBot(logger *log.Logger, apiSecret string) *Bot {
+func MakeBot(logger *log.Logger, apiSecret string) (*Bot, error) {
 	api := slack.New(apiSecret)
 	api.SetDebug(true)
 
@@ -80,9 +81,13 @@ func MakeBot(logger *log.Logger, apiSecret string) *Bot {
 		DB:       0,  // use default DB
 	})
 
+	if _, err := memory.Ping().Result(); err != nil {
+		return nil, err
+	}
+
 	return &Bot{
 		logger: logger,
 		rtm:    rtm,
 		memory: memory,
-	}
+	}, nil
 }

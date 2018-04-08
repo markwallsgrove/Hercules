@@ -9,8 +9,6 @@ RUN cd /src && go-wrapper download \
 FROM alpine:3.6
 WORKDIR /
 RUN apk --no-cache update && \
-    apk --no-cache add python py-pip py-setuptools ca-certificates curl groff less && \
-    pip --no-cache-dir install awscli && \
-    rm -rf /var/cache/apk/*
+    apk --no-cache add ca-certificates
 COPY --from=build-env /src/hercules /hercules
 CMD ["/hercules"]
