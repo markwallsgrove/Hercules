@@ -1,0 +1,13 @@
+
+version: '2'
+services:
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379"
+  hercules:
+    image: "hercules:latest"
+    links:
+      - redis
+    environment:
+      - SLACK_API_TOKEN=${SLACK_API_TOKEN}
