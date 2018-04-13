@@ -43,6 +43,7 @@ Loop:
 		}
 	}
 
+	b.close()
 }
 
 func (b *Bot) close() {
