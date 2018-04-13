@@ -28,7 +28,7 @@ func (w *TestWorker) Init(rtm *slack.RTM, memory *redis.Client) []Registration {
 	}
 }
 
-func (w *TestWorker) hello(event slack.MessageEvent) {
+func (w *TestWorker) hello(event *slack.MessageEvent) {
 	w.rtm.SendMessage(&slack.OutgoingMessage{
 		Channel: event.Channel,
 		Text:    "hey!",
