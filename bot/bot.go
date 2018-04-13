@@ -31,19 +31,17 @@ func (b *Bot) Register(worker workers.Worker) {
 
 // Listen to events from slack. This call blocks.
 func (b *Bot) Listen() {
-Loop:
+	defer b.close()
+
 	for {
 		select {
 		case event := <-*b.incomingEvents:
 			b.processEvent(event)
-			break
 		case signal := <-*b.quitSignal:
 			b.logger.Printf("Recieved signal: %v", signal)
-			break Loop
+			return
 		}
 	}
-
-	b.close()
 }
 
 func (b *Bot) close() {
