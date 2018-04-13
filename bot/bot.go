@@ -31,6 +31,7 @@ func (b *Bot) Register(worker workers.Worker) {
 
 // Listen to events from slack. This call blocks.
 func (b *Bot) Listen() {
+Loop:
 	for {
 		select {
 		case event := <-*b.incomingEvents:
@@ -38,19 +39,26 @@ func (b *Bot) Listen() {
 			break
 		case signal := <-*b.quitSignal:
 			b.logger.Printf("Recieved signal: %v", signal)
-			break
+			break Loop
 		}
 	}
 
-	b.logger.Println("Shutting down workers")
+}
+
+func (b *Bot) close() {
+	b.logger.Println("shutting down workers")
 	for _, worker := range b.workers {
 		worker.Quit()
 	}
 
-	b.logger.Println("Closing down connection to slack")
+	b.logger.Println("closing down connection to slack")
 	if err := b.rtm.Disconnect(); err != nil {
 		b.logger.Fatal("Error disconnecting from slack", err)
 	}
+
+	b.logger.Println("closing down queues")
+	close(*b.incomingEvents)
+	close(*b.quitSignal)
 }
 
 func (b *Bot) processEvent(event slack.RTMEvent) {
@@ -58,13 +66,13 @@ func (b *Bot) processEvent(event slack.RTMEvent) {
 
 	switch event.Data.(type) {
 	case *slack.MessageEvent:
-		b.logger.Println("checking string '", event.Data.(slack.MessageEvent).Text)
-		b.processMessage(event.Data.(slack.MessageEvent))
+		messageEvent := event.Data.(*slack.MessageEvent)
+		b.processMessage(messageEvent)
 		break
 	}
 }
 
-func (b *Bot) processMessage(event slack.MessageEvent) {
+func (b *Bot) processMessage(event *slack.MessageEvent) {
 	for _, listener := range b.listeners {
 		// TODO: mddleware
 		listener.Apply(event)
@@ -88,15 +96,15 @@ func MakeBot(logger *log.Logger, apiSecret string) (*Bot, error) {
 	go rtm.ManageConnection()
 
 	// TODO: move address & db to argument
-	memory := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
+	// memory := redis.NewClient(&redis.Options{
+	// 	Addr:     "redis:6379",
+	// 	Password: "", // no password set
+	// 	DB:       0,  // use default DB
+	// })
 
-	if _, err := memory.Ping().Result(); err != nil {
-		return nil, err
-	}
+	// if _, err := memory.Ping().Result(); err != nil {
+	// 	return nil, err
+	// }
 
 	quitChannel := make(chan os.Signal)
 	signal.Notify(quitChannel, syscall.SIGTERM)
@@ -107,6 +115,6 @@ func MakeBot(logger *log.Logger, apiSecret string) (*Bot, error) {
 		quitSignal:     &quitChannel,
 		logger:         logger,
 		rtm:            rtm,
-		memory:         memory,
+		// memory:         memory,
 	}, nil
 }

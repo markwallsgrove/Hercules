@@ -9,8 +9,6 @@ import (
 	"github.com/nlopes/slack"
 )
 
-var datePattern = regexp.MustCompile("test date")
-
 // TestWorker demonstration of command execution and approval
 type TestWorker struct {
 	rtm    *slack.RTM
@@ -29,10 +27,7 @@ func (w *TestWorker) Init(rtm *slack.RTM, memory *redis.Client) []Registration {
 }
 
 func (w *TestWorker) hello(event *slack.MessageEvent) {
-	w.rtm.SendMessage(&slack.OutgoingMessage{
-		Channel: event.Channel,
-		Text:    "hey!",
-	})
+	w.rtm.SendMessage(w.rtm.NewOutgoingMessage("hey!", event.Channel))
 }
 
 // Quit the worker and close down any resources
