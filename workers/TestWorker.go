@@ -1,39 +1,44 @@
 package workers
 
 import (
-	"fmt"
 	"log"
 
 	"regexp"
 
+	"github.com/go-redis/redis"
 	"github.com/nlopes/slack"
 )
 
-var testGuidPattern = regexp.MustCompile("test guid")
+var datePattern = regexp.MustCompile("test date")
 
+// TestWorker demonstration of command execution and approval
 type TestWorker struct {
 	rtm    *slack.RTM
 	logger *log.Logger
+	memory *redis.Client
 }
 
-func (w *TestWorker) Init(rtm *slack.RTM) {
+// Init the worker
+func (w *TestWorker) Init(rtm *slack.RTM, memory *redis.Client) []Registration {
 	w.rtm = rtm
-}
+	w.memory = memory
 
-func (w *TestWorker) Process(event slack.RTMEvent) bool {
-	switch ev := event.Data.(type) {
-	case *slack.MessageEvent:
-		fmt.Printf("testing string %s", ev.Text)
-		if testGuidPattern.MatchString(ev.Text) {
-			fmt.Printf("Message: %v\n", ev)
-		}
+	return []Registration{
+		Registration{"hello world", regexp.MustCompile("^yo$"), w.hello},
 	}
-
-	return false
 }
 
+func (w *TestWorker) hello(event slack.MessageEvent) {
+	w.rtm.SendMessage(&slack.OutgoingMessage{
+		Channel: event.Channel,
+		Text:    "hey!",
+	})
+}
+
+// Quit the worker and close down any resources
 func (w *TestWorker) Quit() {}
 
+// MakeTestWorker constructor
 func MakeTestWorker(logger *log.Logger) Worker {
 	return &TestWorker{
 		logger: logger,

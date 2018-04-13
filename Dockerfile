@@ -3,7 +3,7 @@ RUN apk add --no-cache git
 ADD . /src
 RUN cd /src && go-wrapper download \
     && CGO_ENABLED=0 GOOS=linux \
-    go build -a -ldflags '-extldflags "-static"' -o hercules main.go;
+    go build -a -ldflags '-extldflags "-static"' -o hercules;
 
 # final stage
 FROM alpine:3.6
