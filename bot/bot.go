@@ -58,7 +58,7 @@ func (b *Bot) close() {
 	}
 
 	b.logger.Println("closing down queues")
-	close(*b.incomingEvents)
+	// close(*b.incomingEvents)
 	close(*b.quitSignal)
 }
 
