@@ -22,7 +22,7 @@ func (w *TestWorker) Init(rtm *slack.RTM, memory *redis.Client) []Registration {
 	w.memory = memory
 
 	return []Registration{
-		Registration{"hello world", regexp.MustCompile("^yo$"), w.hello},
+		Registration{"hello world", map[string]string{}, regexp.MustCompile("^yo$"), w.hello},
 	}
 }
 

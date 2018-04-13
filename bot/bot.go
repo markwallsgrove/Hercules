@@ -38,26 +38,10 @@ func (b *Bot) Listen() {
 		case event := <-*b.incomingEvents:
 			b.processEvent(event)
 		case signal := <-*b.quitSignal:
-			b.logger.Printf("Recieved signal: %v", signal)
+			b.logger.Printf("recieved signal: %v", signal)
 			return
 		}
 	}
-}
-
-func (b *Bot) close() {
-	b.logger.Println("shutting down workers")
-	for _, worker := range b.workers {
-		worker.Quit()
-	}
-
-	b.logger.Println("closing down connection to slack")
-	if err := b.rtm.Disconnect(); err != nil {
-		b.logger.Fatal("Error disconnecting from slack", err)
-	}
-
-	b.logger.Println("closing down queues")
-	// close(*b.incomingEvents)
-	close(*b.quitSignal)
 }
 
 func (b *Bot) processEvent(event slack.RTMEvent) {
@@ -76,6 +60,22 @@ func (b *Bot) processMessage(event *slack.MessageEvent) {
 		// TODO: mddleware
 		listener.Apply(event)
 	}
+}
+
+// close down all resources
+func (b *Bot) close() {
+	b.logger.Println("shutting down workers")
+	for _, worker := range b.workers {
+		worker.Quit()
+	}
+
+	b.logger.Println("closing down connection to slack")
+	if err := b.rtm.Disconnect(); err != nil {
+		b.logger.Fatal("disconnecting from slack", err)
+	}
+
+	b.logger.Println("closing down queues")
+	close(*b.quitSignal)
 }
 
 // Quit listening to slack. This will cause the listen method to quit.
