@@ -58,6 +58,7 @@ func (b *Bot) processEvent(event slack.RTMEvent) {
 
 	switch event.Data.(type) {
 	case slack.MessageEvent:
+		b.logger.Println("checking string '", event.Data.(slack.MessageEvent).Text)
 		b.processMessage(event.Data.(slack.MessageEvent))
 		break
 	}
