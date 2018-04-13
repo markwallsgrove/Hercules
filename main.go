@@ -11,12 +11,12 @@ import (
 func main() {
 	slackSecret := os.Getenv("SLACK_API_TOKEN")
 	logger := log.New(os.Stdout, "bot: ", log.Lshortfile|log.LstdFlags)
+	bot, err := bot.MakeBot(logger, slackSecret)
 
-	if bot, err := bot.MakeBot(logger, slackSecret); err != nil {
+	if err != nil {
 		panic(err)
-	} else {
-		bot.Register(workers.MakeTestWorker(logger))
-		bot.Listen()
-		bot.Quit()
 	}
+
+	bot.Register(workers.MakeTestWorker(logger))
+	bot.Listen()
 }
