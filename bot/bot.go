@@ -9,6 +9,7 @@ import (
 	"github.com/markwallsgrove/hercules/types"
 	"github.com/markwallsgrove/hercules/workers"
 	"github.com/nlopes/slack"
+	"github.com/wallix/awless/logger"
 )
 
 // Bot slack bot
@@ -84,9 +85,7 @@ func (b *Bot) Quit() {
 	*b.quitSignal <- syscall.SIGTERM
 }
 
-func StartBot(secret string, url string) *Bot {
-	logger := log.New(os.Stdout, "bot: ", log.Lshortfile|log.LstdFlags)
-
+func StartBot(secret string, url string, logger logger.Logger) *Bot {
 	slack.SetLogger(logger)
 	slack.SLACK_API = url
 
@@ -107,6 +106,5 @@ func StartBot(secret string, url string) *Bot {
 		rtm:            rtm,
 	}
 
-	bot.Register(workers.MakeTestWorker(logger))
 	return bot
 }
