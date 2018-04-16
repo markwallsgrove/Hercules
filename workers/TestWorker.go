@@ -5,31 +5,26 @@ import (
 
 	"regexp"
 
-	"github.com/go-redis/redis"
+	"github.com/markwallsgrove/hercules/types"
 	"github.com/nlopes/slack"
 )
 
 // TestWorker demonstration of command execution and approval
 type TestWorker struct {
-	rtm    *slack.RTM
+	rtm    types.RTM
 	logger *log.Logger
-	memory *redis.Client
 }
 
 // Init the worker
-func (w *TestWorker) Init(rtm *slack.RTM, memory *redis.Client) []Registration {
+func (w *TestWorker) Init(rtm types.RTM) []Registration {
 	w.rtm = rtm
-	w.memory = memory
 
 	return []Registration{
-		Registration{
-			Name: "hello world",
-			Meta: map[string]string{
-				"approval": "true",
-			},
-			pattern: regexp.MustCompile("^yo$"),
-			fnc:     w.hello,
-		},
+		MakeRegistration(
+			"hello world",
+			regexp.MustCompile("^yo$"),
+			w.hello,
+		),
 	}
 }
 

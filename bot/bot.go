@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/go-redis/redis"
+	"github.com/markwallsgrove/hercules/types"
 	"github.com/markwallsgrove/hercules/workers"
 	"github.com/nlopes/slack"
 )
@@ -17,16 +17,15 @@ type Bot struct {
 	workers        []workers.Worker
 	incomingEvents *chan slack.RTMEvent
 	quitSignal     *chan os.Signal
-	rtm            *slack.RTM
+	rtm            types.RTM
 	logger         *log.Logger
-	memory         *redis.Client
 }
 
 // Register a worker to recieve events
 func (b *Bot) Register(worker workers.Worker) {
-	b.workers = append(b.workers, worker)
-	listeners := worker.Init(b.rtm, b.memory)
+	listeners := worker.Init(b.rtm)
 	b.listeners = append(b.listeners, listeners...)
+	b.workers = append(b.workers, worker)
 }
 
 // Listen to events from slack. This call blocks.
@@ -44,6 +43,7 @@ func (b *Bot) Listen() {
 	}
 }
 
+// Process incoming slack event
 func (b *Bot) processEvent(event slack.RTMEvent) {
 	b.logger.Println("processing message ", event.Data)
 
@@ -55,9 +55,9 @@ func (b *Bot) processEvent(event slack.RTMEvent) {
 	}
 }
 
+// Process incoming message event
 func (b *Bot) processMessage(event *slack.MessageEvent) {
 	for _, listener := range b.listeners {
-		// TODO: mddleware
 		listener.Apply(event)
 	}
 }
@@ -84,36 +84,29 @@ func (b *Bot) Quit() {
 	*b.quitSignal <- syscall.SIGTERM
 }
 
-// MakeBot create a new bot
-func MakeBot(logger *log.Logger, apiSecret string) (*Bot, error) {
-	api := slack.New(apiSecret)
-	api.SetDebug(true)
+func StartBot(secret string, url string) *Bot {
+	logger := log.New(os.Stdout, "bot: ", log.Lshortfile|log.LstdFlags)
 
 	slack.SetLogger(logger)
+	slack.SLACK_API = url
 
-	rtm := api.NewRTM()
+	api := slack.New(secret)
+	api.SetDebug(true)
+
+	rtm := api.NewRTM(slack.RTMOptionUseStart(true))
 	go rtm.ManageConnection()
-
-	// TODO: move address & db to argument
-	// memory := redis.NewClient(&redis.Options{
-	// 	Addr:     "redis:6379",
-	// 	Password: "", // no password set
-	// 	DB:       0,  // use default DB
-	// })
-
-	// if _, err := memory.Ping().Result(); err != nil {
-	// 	return nil, err
-	// }
 
 	quitChannel := make(chan os.Signal)
 	signal.Notify(quitChannel, syscall.SIGTERM)
 	signal.Notify(quitChannel, syscall.SIGINT)
 
-	return &Bot{
+	bot := &Bot{
 		incomingEvents: &rtm.IncomingEvents,
 		quitSignal:     &quitChannel,
 		logger:         logger,
 		rtm:            rtm,
-		// memory:         memory,
-	}, nil
+	}
+
+	bot.Register(workers.MakeTestWorker(logger))
+	return bot
 }

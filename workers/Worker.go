@@ -1,11 +1,8 @@
 package workers
 
-import (
-	"github.com/go-redis/redis"
-	"github.com/nlopes/slack"
-)
+import "github.com/markwallsgrove/hercules/types"
 
 type Worker interface {
-	Init(rtm *slack.RTM, redis *redis.Client) []Registration
+	Init(rtm types.RTM) []Registration
 	Quit()
 }
